@@ -1,0 +1,5 @@
+view blocks:
+  title: 'View blocks'
+  # (optional) Boolean, when set to true a warning about site security will
+  # be displayed on the Permissions page. Defaults to false.
+  restrict access: false

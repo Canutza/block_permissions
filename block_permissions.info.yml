@@ -1,0 +1,4 @@
+name: Block Permissions
+type: module
+description: 'This module provides a block view permission and an option to override this permission for each block.'
+core: 8.x

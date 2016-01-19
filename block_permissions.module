@@ -1,0 +1,59 @@
+<?php
+/**
+* @file
+* This module provides a block view permission and an option to override this
+* permission for each block.
+*/
+
+use \Drupal\Core\Access\AccessResult;
+use \Drupal\Core\Session\AccountInterface;
+use \Drupal\block\Entity\Block;
+
+/**
+ * Implements hook_block_access().
+ */
+function block_permissions_block_access(Block $block, $operation, AccountInterface $account) {
+	if ($operation == 'view') {
+		$settings = $block->get('settings');
+		if ($settings['override_block_visibility_permission']) {
+			return AccessResult::allowed();
+		}
+		else if (!$account->hasPermission('view blocks')) {
+			return AccessResult::forbidden();
+		}
+
+	}
+
+	// No opinion.
+	return AccessResult::neutral();
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function block_permissions_form_block_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+	$block_editing = Block::load($form['id']['#default_value']);
+	$settings = $block_editing->get('settings');
+
+	// Add a config to override the permission for all blocks
+	$form['settings']['override_block_visibility_permission'] = array(
+		'#type' => 'checkbox',
+		'#title' => t('Yes'),
+		'#prefix' => '<div class="override-block-view-permissions-description">' . t('Override the block view permissions ?') . '</div>',
+		'#default_value' => isset($settings['override_block_visibility_permission']) ? $settings['override_block_visibility_permission'] : 0,
+	);
+
+	// Add a custom submit handler to save the array of types back to the config file.
+	$form['actions']['submit']['#submit'][] = 'block_permissions_block_settings_submit';
+}
+
+/**
+ * Custom submit handler for hook_form_alter().
+ */
+function block_permissions_block_settings_submit($form, FormStateInterface $form_state) {
+	$block = Block::load($form['id']['#default_value']);
+	$settings = $form_state->getValue('settings');
+
+	$block->set('settings', $settings);
+	$block->save();
+}
